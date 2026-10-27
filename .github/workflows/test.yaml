@@ -5,15 +5,19 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:      # 支持手动触发
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 15
 
-      - uses: actions/setup-python@v5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v5
         with:
           python-version: '3.8'
           cache: 'pip'
@@ -35,18 +39,4 @@ jobs:
         with:
           name: allure-results
           path: allure-results/
-
-      - name: Generate Allure report
-        if: always()
-        uses: simple-elf/allure-report-action@master
-        with:
-          allure_results: allure-results
-          allure_history: allure-history
-
-      - name: Deploy report to Pages
-        if: always()
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: allure-history
+          retention-days: 7
