@@ -1,0 +1,22 @@
+# 报表接口全部需要 admin token
+total_sales_of_years:
+  - case_name: "年份销售-默认"
+    params: {}
+    expect_status: 200
+
+  - case_name: "年份销售-最近2年"
+    params:
+      years: 2
+    expect_status: 200
+
+total_sales_per_country:
+  - case_name: "国家销售-正常"
+    expect_status: 200
+
+top10_purchased_products:
+  - case_name: "Top10产品-正常"
+    expect_status: 200
+
+top10_best_selling_categories:
+  - case_name: "Top10分类-正常"
+    expect_status: 200

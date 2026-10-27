@@ -1,0 +1,44 @@
+# ---------- 添加收藏 ----------
+add:
+  - case_name: "收藏-正常"
+    use_real_product: true
+    expect_status: 201
+    expect_has_id: true
+
+  - case_name: "收藏-不存在的商品"
+    product_id: "nonexistent"
+    expect_status: 422
+
+# 重复收藏：swagger 明确 409（字段级 MessageBag 或单条 message）
+# 用例执行前会先清理该 product，确保它是"已收藏"状态后再 add
+duplicate:
+  - case_name: "收藏-重复收藏"
+    use_real_product: true
+    expect_status: 409
+
+# ---------- 查询 / 删除 ----------
+get:
+  - case_name: "查收藏-正常"
+    expect_status: 200
+
+  - case_name: "查收藏-不存在的ID"
+    favorite_id: "nonexistent"
+    expect_status: 404
+
+delete:
+  - case_name: "删收藏-正常"
+    expect_status: 204
+
+  - case_name: "删收藏-不存在的ID"
+    favorite_id: "nonexistent"
+    expect_status: 204
+
+# ---------- 权限 ----------
+unauth:
+  - case_name: "收藏-未登录"
+    expect_status: 401
+    expect_error: "Unauthorized"
+
+  - case_name: "查收藏-未登录"
+    expect_status: 401
+    expect_error: "Unauthorized"

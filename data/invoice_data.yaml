@@ -1,0 +1,106 @@
+# ============================================================
+# 数据分层原则：
+#   - 正常用例不写 billing 字段，由 real_billing_address fixture 注入
+#   - 错误用例显式写 billing，用于构造"缺字段"等非法数据
+#   - bootstrap_billing（唯一硬编码）来源：真实网页下单抓包
+#     后端对 country-city 做配对白名单校验，DM + New Joaquinberg 是已验证可用组合
+# ============================================================
+
+# ---------- 创建订单（登录用户）----------
+# 契约依据：
+#   - 成功 201（swagger 写 200，实际 201，文档不一致）
+#   - payment_details 必须 present（即使是 cash-on-delivery 也需要 {}）
+#   - billing_state / billing_postal_code 非必填
+create:
+  - case_name: "下单-现金支付"
+    payment_method: "cash-on-delivery"
+    expect_status: 201
+    expect_has_invoice_number: true
+
+  - case_name: "下单-缺账单街道"
+    payment_method: "cash-on-delivery"
+    billing:
+      billing_city: "New Joaquinberg"
+      billing_state: "Arkansas"
+      billing_country: "DM"
+      billing_postal_code: "100000"
+    expect_status: 422
+
+  - case_name: "下单-不存在的支付方式"
+    payment_method: "nonexistent-method"
+    expect_status: 422
+
+  - case_name: "下单-不存在的购物车"
+    payment_method: "cash-on-delivery"
+    cart_id: "nonexistent"
+    expect_status: 404
+
+# ---------- 查询订单 ----------
+get:
+  - case_name: "查订单-正常"
+    expect_status: 200
+    expect_has_invoicelines: true
+
+  - case_name: "查订单-不存在的ID"
+    invoice_id: "nonexistent"
+    expect_status: 404
+
+# ---------- 列表（权限分层）----------
+# swagger 明确：admin retrieves all invoices, user retrieves only related invoices
+list:
+  - case_name: "订单列表-普通用户默认分页"
+    login_as: "user"
+    params: {}
+    expect_status: 200
+
+  - case_name: "订单列表-普通用户第一页"
+    login_as: "user"
+    params:
+      page: 1
+    expect_status: 200
+
+  - case_name: "订单列表-管理员查看全部"
+    login_as: "admin"
+    params: {}
+    expect_status: 200
+
+# ---------- 更新状态（admin）----------
+# 枚举来自用户故事 AC5：AWAITING_FULFILLMENT / ON_HOLD / AWAITING_SHIPMENT /
+# SHIPPED / COMPLETED
+status:
+  - case_name: "改订单状态-正常"
+    status: "AWAITING_FULFILLMENT"
+    status_message: "Order received"
+    expect_status: 200
+
+  - case_name: "改订单状态-非法状态值"
+    status: "INVALID_STATUS_XYZ"
+    status_message: "test"
+    expect_status: 404
+
+  - case_name: "改订单状态-不存在的ID"
+    invoice_id: "nonexistent"
+    status: "AWAITING_FULFILLMENT"
+    status_message: "test"
+    expect_status: 404
+
+# ---------- 游客下单 ----------
+# BUG-003：swagger 声明端点存在，实际返回 404 {"message":"Resource not found"}
+# 注意 "Resource"（路由级 404）与业务层 "Requested item not found" 不同，
+# 疑似端点不存在或路径有误。修复后 expect_status 可能要改为 201（同登录下单）
+guest:
+  - case_name: "游客下单-正常"
+    payment_method: "cash-on-delivery"
+    guest_email: "guest_test@example.com"
+    guest_first_name: "Guest"
+    guest_last_name: "User"
+    expect_status: 201
+    expect_has_invoice_number: true
+
+  - case_name: "游客下单-缺 guest_email"
+    payment_method: "cash-on-delivery"
+    guest_first_name: "Guest"
+    guest_last_name: "User"
+    expect_status: 422
+    xfail: true
+    reason: "BUG-003: 缺 guest_email 时返回 404 Resource not found，而非 422。"

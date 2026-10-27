@@ -1,0 +1,96 @@
+# ---------- 登录 ----------
+login:
+  - case_name: "正常登录-用户账号"
+    login_as: "user"
+    expect_status: 200
+    expect_has_token: true
+
+  - case_name: "正常登录-管理员账号"
+    login_as: "admin"
+    expect_status: 200
+    expect_has_token: true
+
+  - case_name: "邮箱为空"
+    email: ""
+    password: "welcome01"
+    expect_status: 401
+    expect_has_token: false
+    expect_error: "Invalid login request"
+
+# ---------- 注册 ----------
+# 契约依据：POST /users/register 成功 201，返回完整 user 对象
+# 每个用例的 email 都不同（测试代码内会自动加时间戳后缀），避免 409 冲突
+register:
+  - case_name: "注册-正常"
+    expect_status: 201
+    expect_has_id: true
+
+  - case_name: "注册-缺 first_name"
+    omit_fields: ["first_name"]
+    expect_status: 422
+
+  - case_name: "注册-缺 email"
+    omit_fields: ["email"]
+    expect_status: 422
+
+  - case_name: "注册-密码过短"
+    override:
+      password: "Aa1!"
+    expect_status: 422
+
+  - case_name: "注册-密码缺大写"
+    override:
+      password: "aaaaaaaa1!"
+    expect_status: 422
+
+  - case_name: "注册-密码缺符号"
+    override:
+      password: "Aaaaaaaa1"
+    expect_status: 422
+
+  - case_name: "注册-密码被泄露库收录"
+    override:
+      password: "password123"
+    expect_status: 422
+
+  - case_name: "注册-未成年（15 岁）"
+    override:
+      dob: "2011-01-01"
+    expect_status: 422
+
+# ---------- 忘记密码 ----------
+# 契约依据：
+#   - 成功 200 {"success": true}
+#   - 实际行为：密码被重置为 "welcome02"（swagger 注明）
+# 用例必须用一次性账号（throwaway_user fixture），因为会改密码
+forgot_password:
+  - case_name: "忘记密码-正常"
+    expect_status: 200
+
+  - case_name: "忘记密码-不存在的邮箱"
+    email: "nonexistent_user_xyz@example.org"
+    expect_status: 404   # 安全设计：不暴露邮箱是否存在（如实测 404/422 再改）
+
+# ---------- 修改密码 ----------
+# 契约依据：成功 200 {"success": true}，旧密码错 422
+# 用例必须用一次性账号（throwaway_user fixture），因为会改密码
+change_password:
+  - case_name: "改密码-新密码与旧密码相同"
+    new_password: "Kp9#Rt2!wQvX"   # 与一次性账号的初始密码相同
+    expect_status: 400
+  - case_name: "改密码-正常"
+    new_password: "NewSec@2026xyz"
+    expect_status: 200
+    verify_login_with_new: true   # 改完后用新密码能登录
+
+  - case_name: "改密码-旧密码错误"
+    current_password: "wrong_old_password"
+    new_password: "NewSec@2026xyz"
+    expect_status: 400
+
+  - case_name: "改密码-两次新密码不一致"
+    new_password: "NewSec@2026xyz"
+    new_password_confirmation: "DifferentSec@2026"
+    expect_status: 422
+    xfail: true
+    reason: "BUG-004: 两次新密码不一致应返回 422（请求体验证失败），实际返回 404 Resource not found。"

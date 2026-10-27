@@ -1,0 +1,84 @@
+# ============================================================
+# Product 资源全部测试数据（公开接口 + admin CRUD 统一）
+# 契约依据（实测确认）：
+#   - GET 公开
+#   - POST/PUT/DELETE 需 admin（但 BUG-006：实测 POST 对普通用户也放行）
+#   - POST 成功 201（swagger 写 200，文档不一致）
+#   - POST 的 co2_rating 无枚举约束（swagger 类型仅 string）
+#   - DELETE invalid id 返回 403（不是 404，契约偏差）
+# ============================================================
+
+list:
+  - case_name: "查询产品列表-默认分页"
+    params: {}
+    expect_status: 200
+
+  - case_name: "查询产品列表-按价格升序"
+    params:
+      sort: "price,asc"
+    expect_status: 200
+
+  - case_name: "查询产品列表-第一页"
+    params:
+      page: 1
+    expect_status: 200
+
+detail:
+  - case_name: "获取产品详情-正常ID"
+    product_id: "FROM_LIST"
+    expect_status: 200
+    expect_has_name: true
+
+  - case_name: "获取产品详情-不存在的ID"
+    product_id: "nonexistent"
+    expect_status: 404
+
+# ---------- admin CRUD ----------
+# 必填字段（实测确认）：
+#   name / description / price / category_id / brand_id / product_image_id
+create:
+  - case_name: "创建产品-正常"
+    expect_status: 201
+    expect_has_id: true
+
+  - case_name: "创建产品-缺 name"
+    omit: ["name"]
+    expect_status: 422
+
+  - case_name: "创建产品-缺 price"
+    omit: ["price"]
+    expect_status: 422
+
+  # swagger 的 co2_rating 类型仅 string，无枚举约束
+  # 传 "X" 也能创建成功，后端映射 is_eco_friendly=false
+  # 不算 BUG（契约宽松），但这是"设计上不严格"的观察
+  - case_name: "创建产品-co2_rating 非标准值（接口不校验枚举）"
+    override:
+      co2_rating: "X"
+    expect_status: 201
+
+update:
+  - case_name: "更新产品-正常"
+    expect_status: 200
+
+  - case_name: "更新产品-不存在的ID"
+    product_id: "nonexistent"
+    expect_status: 404
+
+delete:
+  - case_name: "删除产品-正常"
+    expect_status: 204
+
+  # 契约偏差：DELETE 不存在 id 返回 403 Forbidden 而非 404
+  # 可能是"invalid id 走 403 分支"或"权限检查先于存在性检查"
+  - case_name: "删除产品-不存在的ID"
+    product_id: "nonexistent"
+    expect_status: 404
+
+# ---------- 权限 ----------
+unauth:
+  # BUG-005：普通用户创建 product 实际返回 201（成功创建），应为 403
+  - case_name: "创建产品-普通用户（越权）"
+    expect_status: 403
+    xfail: true
+    reason: "BUG-005: 普通用户可创建 product（越权）,实际返回 201 并成功创建。"

@@ -1,0 +1,92 @@
+# ---------- 创建购物车 ----------
+create:
+  - case_name: "创建购物车-正常"
+    expect_status: 201
+    expect_has_id: true
+
+# ---------- 加入购物车 ----------
+# 字段说明：
+#   add_quantity: 前置 add 的数量（0 表示不加购，用于"商品不在购物车"场景）
+#   quantity:     用例传入 add_to_cart 的 quantity
+add:
+  - case_name: "加购-正常数量1"
+    quantity: 1
+    expect_status: 200
+    expect_result_field: true
+
+  # 保留 xfail：swagger 期望 422，实际 404（见 reason）
+  # 跑测试时若显示 XPASS(strict) → BUG 已被修复，删掉 xfail 即可
+  - case_name: "加购-数量0"
+    quantity: 0
+    expect_status: 422
+    xfail: true
+    reason: "BUG-001: 非法 quantity 应返回 422，实际返回 404 Resource not found"
+
+  - case_name: "加购-负数数量"
+    quantity: -1
+    expect_status: 422
+    xfail: true
+    reason: "BUG-001: 非法 quantity 应返回 422，实际返回 404 Resource not found"
+
+  - case_name: "加购-不存在的商品"
+    quantity: 1
+    product_id: "nonexistent"
+    expect_status: 404
+
+# ---------- 查询购物车 ----------
+get:
+  - case_name: "查购物车-正常"
+    expect_status: 200
+    expect_has_cart_items: true
+
+  - case_name: "查购物车-不存在的ID"
+    cart_id: "nonexistent"
+    expect_status: 404
+
+# ---------- 更新数量 ----------
+update_quantity:
+  - case_name: "更新数量-正常"
+    add_quantity: 1       # 先加购 1 件
+    new_quantity: 5       # 再更新到 5
+    expect_status: 200
+
+  - case_name: "更新数量-商品不在购物车"
+    add_quantity: 0       # 不加购，直接 update
+    new_quantity: 5
+    expect_status: 200
+    expect_result_field: true
+
+  - case_name: "更新数量-不存在的购物车"
+    cart_id: "nonexistent"
+    new_quantity: 5
+    expect_status: 404
+
+# ---------- 删除购物车中的商品 ----------
+delete_product:
+  - case_name: "删除商品-正常"
+    add_quantity: 1
+    expect_status: 204
+
+  - case_name: "删除商品-商品不在购物车"
+    add_quantity: 0
+    expect_status: 204
+
+  - case_name: "删除商品-不存在的购物车"
+    cart_id: "nonexistent"
+    expect_status: 404
+
+# ---------- 删除购物车 ----------
+delete_cart:
+  - case_name: "删除购物车-正常"
+    expect_status: 204
+
+  - case_name: "删除购物车-不存在的ID"
+    cart_id: "nonexistent"
+    expect_status: 404
+
+  - case_name: "删除购物车-未登录"
+    unauth: true              # 用未登录 req 调用
+    expect_status: 401
+    expect_error: "Unauthorized"
+    xfail: true
+    reason: "BUG-002: 未做鉴权，匿名可删任意 cart"

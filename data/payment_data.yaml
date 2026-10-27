@@ -1,0 +1,30 @@
+# 契约依据（swagger + 实测确认）：
+#   - POST /payment/check 只承诺 200，不校验字段，不需要登录
+#   - 响应：{"message": "Payment was successful"}（swagger 写的是 "Success status"，文案不一致）
+#   - 它是个 mock 接口，不承担真实支付校验；真实校验在 POST /invoices 后端
+#
+# 本组用例的定位：契约快照测试
+#   若将来后端加了字段校验（返回 422）或加了鉴权（返回 401），
+#   这些用例会 FAIL，提醒我们更新契约。这就是契约测试的价值。
+check:
+  - case_name: "支付校验-现金支付"
+    payload:
+      payment_method: "cash-on-delivery"
+      payment_details: {}
+    expect_status: 200
+
+  - case_name: "支付校验-缺 payment_method（接口不校验）"
+    payload:
+      payment_details: {}
+    expect_status: 200
+
+  - case_name: "支付校验-缺 payment_details（接口不校验）"
+    payload:
+      payment_method: "cash-on-delivery"
+    expect_status: 200
+
+  - case_name: "支付校验-非法 payment_method（接口不校验）"
+    payload:
+      payment_method: "nonexistent-method"
+      payment_details: {}
+    expect_status: 200

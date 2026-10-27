@@ -1,0 +1,15 @@
+# TOTP 测试数据说明：
+#   - setup 返回 {"secret", "qrCodeUrl"}
+#   - verify 请求体 {"access_token", "totp"}（access_token 冗余，测试时探测是否真必填）
+#   - verify 成功后账号启用 2FA，后续登录要 TOTP
+#   - 所有用例必须用 throwaway_user fixture
+#   - 每个用例独立注册账号 + 独立 setup，因为 verify 成功后不能再 setup
+
+# setup 单独测（不含 verify）
+setup:
+  - case_name: "TOTP 设置-正常"
+    expect_status: 200
+    expect_has_secret: true
+    expect_has_qr_url: true
+
+# 完整流程用例（setup + verify）不需要数据驱动，直接在测试代码里写

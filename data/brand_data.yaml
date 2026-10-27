@@ -1,0 +1,35 @@
+# ---------- 列表 / 详情 ----------
+list:
+  - case_name: "品牌列表-正常"
+    expect_status: 200
+
+detail:
+  - case_name: "品牌详情-正常"
+    expect_status: 200
+    expect_has_name: true
+
+  - case_name: "品牌详情-不存在的ID"
+    brand_id: "nonexistent"
+    expect_status: 404
+
+# ---------- 创建 ----------
+# slug 由测试代码自动加时间戳，避免跨用例冲突
+create:
+  - case_name: "创建品牌-正常"
+    expect_status: 201
+    expect_has_id: true
+
+  - case_name: "创建品牌-缺 name"
+    omit: ["name"]
+    expect_status: 422
+
+  - case_name: "创建品牌-缺 slug"
+    omit: ["slug"]
+    expect_status: 422
+
+# ---------- 权限 ----------
+unauth:
+  - case_name: "创建品牌-普通用户（越权）"
+    expect_status: 403
+    xfail: true
+    reason: "BUG-005: 普通用户能创建品牌（201），RBAC 中间件缺失。admin-only 写接口对普通用户放行。"

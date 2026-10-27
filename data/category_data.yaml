@@ -1,0 +1,28 @@
+list:
+  - case_name: "分类列表-正常"
+    expect_status: 200
+
+create:
+  - case_name: "创建分类-顶级"
+    expect_status: 201
+    expect_has_id: true
+
+  - case_name: "创建分类-缺 name"
+    omit: ["name"]
+    expect_status: 422
+
+  - case_name: "创建分类-缺 slug"
+    omit: ["slug"]
+    expect_status: 422
+
+# 子分类创建（parent_id 用真实 id）
+create_child:
+  - case_name: "创建分类-子分类（带 parent_id）"
+    expect_status: 201
+    expect_has_id: true
+
+unauth:
+  - case_name: "创建分类-普通用户（越权）"
+    expect_status: 403
+    xfail: true
+    reason: "BUG-005: 普通用户能创建分类，RBAC 中间件缺失。admin-only 写接口对普通用户放行。"

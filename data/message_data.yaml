@@ -1,0 +1,33 @@
+# 契约依据（swagger）：
+#   - POST /messages 公开，成功 200 {"success": true}
+#   - POST /messages 缺字段 → ？（swagger 无 422，先按 422 写，跑出来再改）
+#   - GET /messages 需登录，admin 全看，user 看相关
+send:
+  - case_name: "发消息-正常"
+    payload:
+      name: "AutoTest User"
+      email: "autotest@example.org"
+      subject: "website"
+      message: "Something is wrong with the website. Please check."
+    expect_status: 200
+
+  - case_name: "发消息-缺 name"
+    omit: ["name"]
+    expect_status: 200
+
+  - case_name: "发消息-缺 email"
+    omit: ["email"]
+    expect_status: 200
+
+  - case_name: "发消息-缺 message"
+    omit: ["message"]
+    expect_status: 422
+
+# ---------- 列表 ----------
+list:
+  - case_name: "消息列表-普通用户"
+    expect_status: 200
+
+  - case_name: "消息列表-管理员"
+    login_as: "admin"
+    expect_status: 200
