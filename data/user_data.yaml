@@ -1,6 +1,6 @@
 # ---------- 登录 ----------
 login:
-  - case_name: "正常登录-用户账号"
+  - case_name: "正常登录-普通用户"
     login_as: "user"
     expect_status: 200
     expect_has_token: true
@@ -10,16 +10,29 @@ login:
     expect_status: 200
     expect_has_token: true
 
-  - case_name: "邮箱为空"
+  - case_name: "异常登录-空邮箱"
     email: ""
     password: "welcome01"
     expect_status: 401
     expect_has_token: false
     expect_error: "Invalid login request"
 
+  - case_name: "异常登录-空密码"
+    login_as: "user"
+    password: ""
+    expect_status: 401
+    expect_has_token: false
+    contract_note: "实测消息可能是 Invalid login request 或 Unauthorized，回填 expect_error"
+
+  - case_name: "异常登录-账号不存在"
+    email: "no_such_user_xyz@example.org"
+    password: "welcome01"
+    expect_status: 401
+    expect_has_token: false
+
+
 # ---------- 注册 ----------
-# 契约依据：POST /users/register 成功 201，返回完整 user 对象
-# 每个用例的 email 都不同（测试代码内会自动加时间戳后缀），避免 409 冲突
+
 register:
   - case_name: "注册-正常"
     expect_status: 201
@@ -33,35 +46,151 @@ register:
     omit_fields: ["email"]
     expect_status: 422
 
+  - case_name: "注册-缺 last_name"
+    omit_fields: ["last_name"]
+    expect_status: 422
+
+  - case_name: "注册-缺 password"
+    omit_fields: ["password"]
+    expect_status: 422
+
+  - case_name: "注册-缺 body"
+    omit_body: true
+    expect_status: 422
+
+  - case_name: "注册-仅必填字段"
+    omit_fields: ["address", "phone", "dob"]
+    expect_status: 201
+    expect_has_id: true
+
+  - case_name: "注册-仅 address"
+    omit_fields: ["phone", "dob"]
+    expect_status: 201
+
+  - case_name: "注册-仅 phone"
+    omit_fields: ["address", "dob"]
+    expect_status: 201
+
+  - case_name: "注册-仅 dob"
+    omit_fields: ["address", "phone"]
+    expect_status: 201
+
+  - case_name: "注册-first_name 长度恰好 40"
+    str_len: {field: "first_name", length: 40}
+    expect_status: 201
+
+  - case_name: "注册-first_name 41"
+    str_len: {field: "first_name", length: 41}
+    expect_status: 422
+
+  - case_name: "注册-last_name 长度恰好 20"
+    str_len: {field: "last_name", length: 20}
+    expect_status: 201
+
+  - case_name: "注册-last_name 21"
+    str_len: {field: "last_name", length: 21}
+    expect_status: 422
+
+  - case_name: "注册-email 长度256"
+    email_len: 256
+    expect_status: 201
+
+  - case_name: "注册-email 长度257"
+    email_len: 257
+    expect_status: 422
+
+  - case_name: "注册-密码恰好 8 位"
+    override: {password: "Zx9!Qw2#"}
+    expect_status: 201
+
+  - case_name: "注册-密码 7 位"
+    override: {password: "Aa1!aaa"}
+    expect_status: 422
+
+  - case_name: "注册-密码缺小写"
+    override: {password: "AAAAAAAA1!"}
+    expect_status: 422
+
+  - case_name: "注册-密码缺数字"
+    override: {password: "Aaaaaaaa!"}
+    expect_status: 422
+
   - case_name: "注册-密码过短"
-    override:
-      password: "Aa1!"
+    override: {password: "Aa1!"}
     expect_status: 422
 
   - case_name: "注册-密码缺大写"
-    override:
-      password: "aaaaaaaa1!"
+    override: {password: "aaaaaaaa1!"}
     expect_status: 422
 
   - case_name: "注册-密码缺符号"
-    override:
-      password: "Aaaaaaaa1"
+    override: {password: "Aaaaaaaa1"}
     expect_status: 422
 
   - case_name: "注册-密码被泄露库收录"
-    override:
-      password: "password123"
+    override: {password: "password123"}
     expect_status: 422
 
-  - case_name: "注册-未成年（15 岁）"
-    override:
-      dob: "2011-01-01"
+  - case_name: "注册-年龄恰好 18"
+    age_years: 18
+    expect_status: 201
+    xfail: true
+    reason: "待确认：API文档 schema 只注明 between 18 and 75 years ago，未明确生日当天是否算满18；实测生日当天返回 422，若需求为生日当天算满18则为缺陷"
+  
+  - case_name: "注册-年龄 17"
+    age_years: 17
     expect_status: 422
+
+  - case_name: "注册-年龄恰好 75"
+    age_years: 75
+    expect_status: 201
+
+  - case_name: "注册-年龄 76"
+    age_years: 76
+    expect_status: 422
+    xfail: true
+    reason: "BUG-00: 文档要求 dob 在 18–75 年之间，实测 76（上限紧邻越界） 岁返回 201，边界上限未生效"
+
+  - case_name: "注册-年龄 86"
+    age_years: 86
+    expect_status: 422
+    xfail: true
+    reason: "BUG-00: 同上限缺陷，实测 86 岁（远离边界）仍返回 201，确认 75 岁上限完全未校验"
+  
+  - case_name: "注册-未成年（15 岁）"
+    age_years: 15
+    expect_status: 422
+
+  - case_name: "注册-phone 长度24"
+    str_len: {field: "phone", length: 24}
+    expect_status: 201
+
+  - case_name: "注册-phone 长度25"
+    str_len: {field: "phone", length: 25}
+    expect_status: 422
+
+  - case_name: "注册-street 长度70"
+    str_len: {field: "address.street", length: 70}
+    expect_status: 201
+
+  - case_name: "注册-street 长度71"
+    str_len: {field: "address.street", length: 71}
+    expect_status: 422
+
+  - case_name: "注册-postal_code 长度10"
+    str_len: {field: "address.postal_code", length: 10}
+    expect_status: 201
+
+  - case_name: "注册-postal_code 长度11"
+    str_len: {field: "address.postal_code", length: 11}
+    expect_status: 422
+
+  - case_name: "注册-Unicode 姓名"
+    override: {first_name: "张三", last_name: "李四"}
+    expect_status: 201
+
 
 # ---------- 忘记密码 ----------
-# 契约依据：
-#   - 成功 200 {"success": true}
-#   - 实际行为：密码被重置为 "welcome02"（swagger 注明）
 # 用例必须用一次性账号（throwaway_user fixture），因为会改密码
 forgot_password:
   - case_name: "忘记密码-正常"
@@ -69,10 +198,9 @@ forgot_password:
 
   - case_name: "忘记密码-不存在的邮箱"
     email: "nonexistent_user_xyz@example.org"
-    expect_status: 404   # 安全设计：不暴露邮箱是否存在（如实测 404/422 再改）
+    expect_status: 404   
 
 # ---------- 修改密码 ----------
-# 契约依据：成功 200 {"success": true}，旧密码错 422
 # 用例必须用一次性账号（throwaway_user fixture），因为会改密码
 change_password:
   - case_name: "改密码-新密码与旧密码相同"

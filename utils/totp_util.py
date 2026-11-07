@@ -1,4 +1,3 @@
-# utils/totp_util.py
 import base64
 import hashlib
 import hmac
@@ -15,8 +14,7 @@ def totp_now(secret: str, period: int = 30, digits: int = 6) -> str:
       3. HMAC-SHA1(secret, counter 8字节大端) 
       4. 动态截断（RFC 4226 §5.3）取 31 位
       5. 取后 6 位即验证码
-
-    不依赖 pyotp，避免新增依赖。
+      
     """
     # 补齐 base32 padding（长度必须是 8 的倍数）
     padded = secret.upper() + "=" * ((8 - len(secret) % 8) % 8)

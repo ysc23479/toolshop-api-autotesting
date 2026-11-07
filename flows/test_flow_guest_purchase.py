@@ -1,14 +1,3 @@
-"""E2E 业务流：游客完整购买链路。
-
-覆盖链路：
-  匿名 → 获取产品 → 建购物车 → 加购 → guest 下单
-
-设计取舍：
-  - 游客没有 token，下单后无法 GET 查详情/列表（这是合理的业务限制）
-  - 因此 E2E 到"创建订单成功"为止
-  - 这条链路是 BUG-004（guest 缺字段 404）的反向验证：
-    正常 payload 时端点可用
-"""
 import allure
 import pytest
 from api.cart_api import CartApi

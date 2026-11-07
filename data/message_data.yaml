@@ -1,33 +1,180 @@
-# 契约依据（swagger）：
-#   - POST /messages 公开，成功 200 {"success": true}
-#   - POST /messages 缺字段 → ？（swagger 无 422，先按 422 写，跑出来再改）
-#   - GET /messages 需登录，admin 全看，user 看相关
+# ---------- 发送消息 POST /messages ----------
 send:
-  - case_name: "发消息-正常"
+  - case_name: "发送消息-完整字段-成功"
     payload:
       name: "AutoTest User"
       email: "autotest@example.org"
       subject: "website"
-      message: "Something is wrong with the website. Please check."
+      message: "Something is wrong with the website."
     expect_status: 200
+    expect_has_id: true 
 
-  - case_name: "发消息-缺 name"
+  - case_name: "发送消息-缺 name 仍成功"
     omit: ["name"]
     expect_status: 200
 
-  - case_name: "发消息-缺 email"
-    omit: ["email"]
-    expect_status: 200
+  - case_name: "发送消息-缺 subject-422"
+    omit: ["subject"]
+    expect_status: 422
 
-  - case_name: "发消息-缺 message"
+  - case_name: "发送消息-缺 message-422"
     omit: ["message"]
     expect_status: 422
 
-# ---------- 列表 ----------
+  - case_name: "发送消息-空对象-422"
+    empty_payload: true
+    expect_status: 422
+
+  - case_name: "发送消息-name 长度 119-成功"
+    payload:
+      name: { repeat: "n", length: 119 }
+    expect_status: 200
+    xfail: true
+    reason: "BUG: 文档 maxLength=120，服务端对长纯字符 name 返回 500"
+
+  - case_name: "发送消息-name 长度 120-成功"
+    payload:
+      name: { repeat: "n", length: 120 }
+    expect_status: 200
+    xfail: true
+    reason: "BUG: 文档 maxLength=120，服务端对长纯字符 name 返回 500"
+  
+  - case_name: "发送消息-name 长度 121-422"
+    payload:
+      name: { repeat: "n", length: 121 }
+    expect_status: 422
+
+  - case_name: "发送消息-subject 长度 120-成功"
+    payload:
+      subject: { repeat: "s", length: 120 }
+    expect_status: 200
+
+  - case_name: "发送消息-subject 长度 121-422"
+    payload:
+      subject: { repeat: "s", length: 121 }
+    expect_status: 422
+
+  - case_name: "发送消息-message 长度 250-成功"
+    payload:
+      message: { repeat: "m", length: 250 }
+    expect_status: 200
+
+  - case_name: "发送消息-message 长度 251-422"
+    payload:
+      message: { repeat: "m", length: 251 }
+    expect_status: 422
+
+  - case_name: "发送消息-subject 为 null-422"
+    payload:
+      subject: null
+    expect_status: 422
+
+  - case_name: "发送消息-subject 为数字-422"
+    payload:
+      subject: 123
+    expect_status: 422
+
+
+# ---------- 消息列表 GET /messages ----------
 list:
   - case_name: "消息列表-普通用户"
+    login_as: "user"
     expect_status: 200
+    expect_has_data: true
 
   - case_name: "消息列表-管理员"
     login_as: "admin"
     expect_status: 200
+    expect_has_data: true
+
+  - case_name: "消息列表-指定 page=1"
+    login_as: "user"
+    page: 1
+    expect_status: 200
+    expect_has_data: true
+
+
+# ---------- 获取单条消息 GET /messages/{messageId} ----------
+get:
+
+  - case_name: "获取消息-有效ID-成功"
+    use_real_message: true
+    expect_status: 200
+
+
+  - case_name: "获取消息-不存在的ID"
+    message_id: "nonexistent_message_id"
+    expect_status: 200
+    expect_body_empty: true
+
+# ---------- 回复消息 POST /messages/{messageId}/reply ----------
+reply:
+  - case_name: "回复消息-有效ID-成功"
+    use_real_message: true
+    payload:
+      name: "AutoTest Admin"
+      email: "admin@example.org"
+      subject: "website"
+      message: "Reply from automated test."
+    expect_status: 201
+    expect_has_id: true
+
+  - case_name: "回复消息-不存在的ID"
+    message_id: "nonexistent_message_id"
+    payload:
+      name: "AutoTest Admin"
+      email: "admin@example.org"
+      subject: "website"
+      message: "Reply from automated test."
+    expect_status: 404
+    xfail: true
+    reason: "BUG: 文档 404，实测 500"
+
+  - case_name: "回复消息-缺 message-422"
+    use_real_message: true
+    omit: ["message"]
+    expect_status: 422
+
+
+# ---------- 上传附件 POST /messages/{messageId}/attach-file ----------
+attach:
+
+  - case_name: "上传附件-非空文件"
+    use_real_message: true
+    filename: "test.txt"
+    content_type: "text/plain"
+    content: "hello attachment"
+    expect_status: 400
+    expect_error_contains: "empty files"
+
+  - case_name: "上传附件-空文件-成功"
+    use_real_message: true
+    filename: "empty.txt"
+    content_type: "text/plain"
+    content: ""
+    expect_status: 200
+    expect_success: true
+
+  - case_name: "上传附件-不存在的消息ID-404"
+    message_id: "nonexistent_message_id"
+    filename: "test.txt"
+    content_type: "text/plain"
+    content: ""  
+    expect_status: 404
+    xfail: true
+    reason: "BUG: 未校验 messageId 存在性，应 404 实测 200"
+
+
+# ---------- 权限校验 ----------
+unauth:
+  - case_name: "未登录-消息列表-401"
+    method: list
+    expect_status: 401
+
+  - case_name: "未登录-获取消息-401"
+    method: get
+    expect_status: 401
+
+  - case_name: "未登录-回复消息-401"
+    method: reply
+    expect_status: 401

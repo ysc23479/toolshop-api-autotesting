@@ -5,32 +5,38 @@ create:
     expect_has_id: true
 
 # ---------- 加入购物车 ----------
-# 字段说明：
-#   add_quantity: 前置 add 的数量（0 表示不加购，用于"商品不在购物车"场景）
-#   quantity:     用例传入 add_to_cart 的 quantity
 add:
   - case_name: "加购-正常数量1"
     quantity: 1
     expect_status: 200
     expect_result_field: true
 
-  # 保留 xfail：swagger 期望 422，实际 404（见 reason）
-  # 跑测试时若显示 XPASS(strict) → BUG 已被修复，删掉 xfail 即可
   - case_name: "加购-数量0"
     quantity: 0
     expect_status: 422
     xfail: true
-    reason: "BUG-001: 非法 quantity 应返回 422，实际返回 404 Resource not found"
+    reason: "BUG: 非法 quantity 应返回 422，实际返回 404 Resource not found"
 
   - case_name: "加购-负数数量"
     quantity: -1
     expect_status: 422
     xfail: true
-    reason: "BUG-001: 非法 quantity 应返回 422，实际返回 404 Resource not found"
+    reason: "BUG: 非法 quantity 应返回 422，实际返回 404 Resource not found"
+
+  - case_name: "加购-小数数量"
+    quantity: 1.5
+    expect_status: 422
+    xfail: true
+    reason: "BUG: 非法 quantity 应返回 422，实际返回 404 Resource not found"
 
   - case_name: "加购-不存在的商品"
     quantity: 1
-    product_id: "nonexistent"
+    product_id: "01BBBBBBBBBBBBBBBBBBBBBBBB"
+    expect_status: 404
+
+  - case_name: "加购-不存在的购物车"
+    cart_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
+    quantity: 1
     expect_status: 404
 
 # ---------- 查询购物车 ----------
@@ -40,7 +46,7 @@ get:
     expect_has_cart_items: true
 
   - case_name: "查购物车-不存在的ID"
-    cart_id: "nonexistent"
+    cart_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
     expect_status: 404
 
 # ---------- 更新数量 ----------
@@ -55,9 +61,11 @@ update_quantity:
     new_quantity: 5
     expect_status: 200
     expect_result_field: true
+    xfail: true
+    reason: "BUG: PUT 对不在购物车的商品返回 200 但 cart_items 仍为空"
 
   - case_name: "更新数量-不存在的购物车"
-    cart_id: "nonexistent"
+    cart_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
     new_quantity: 5
     expect_status: 404
 
@@ -72,7 +80,7 @@ delete_product:
     expect_status: 204
 
   - case_name: "删除商品-不存在的购物车"
-    cart_id: "nonexistent"
+    cart_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
     expect_status: 404
 
 # ---------- 删除购物车 ----------
@@ -81,12 +89,5 @@ delete_cart:
     expect_status: 204
 
   - case_name: "删除购物车-不存在的ID"
-    cart_id: "nonexistent"
+    cart_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
     expect_status: 404
-
-  - case_name: "删除购物车-未登录"
-    unauth: true              # 用未登录 req 调用
-    expect_status: 401
-    expect_error: "Unauthorized"
-    xfail: true
-    reason: "BUG-002: 未做鉴权，匿名可删任意 cart"

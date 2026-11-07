@@ -137,11 +137,11 @@ pip install -r requirements.txt
 ```bash
 # 管理员账号（官方文档提供）
 ADMIN_EMAIL=admin@practicesoftwaretesting.com
-ADMIN_PASSWORD=welcome01
+ADMIN_PWD=welcome01
 
 # 普通用户账号（官方文档提供，或用你自己的注册账号）
-USER_EMAIL=customer2@practicesoftwaretesting.com
-USER_PASSWORD=welcome01
+CUSTOMER_EMAIL=customer2@practicesoftwaretesting.com
+CUSTOMER_PWD=welcome01
 ```
 
 > **注意**：`.env` 在 `.gitignore` 中，不会提交到仓库。
@@ -156,7 +156,7 @@ pytest
 pytest -m "not e2e"
 
 # 跳过慢测试（forgot-password / change-password）
-pytest -m "not slow"
+pytest -m 
 
 # 只跑 E2E
 pytest -m e2e
@@ -435,11 +435,11 @@ MIT
 ```bash
 # 管理员账号（官方文档提供）
 ADMIN_EMAIL=admin@practicesoftwaretesting.com
-ADMIN_PASSWORD=welcome01
+ADMIN_PWD=welcome01
 
 # 普通用户账号
-USER_EMAIL=<your-test-email>
-USER_PASSWORD=<your-test-password>
+CUSTOMER_EMAIL=<your-test-email>
+CUSTOMER_PWD=<your-test-password>
 ```
 
 ### ③ `.gitignore` 补全

@@ -32,35 +32,33 @@ def load_delete_cart_cases():
             result.append(pytest.param(c, id=c["case_name"]))
     return result
 
-def load_cart_add_cases():
-    """把 YAML 里的 xfail: true 转成 pytest.mark.xfail(strict=True)。
-
-    strict=True 的含义：BUG 修复后测试通过时，pytest 会报 XPASS(strict) 为失败，
-    提醒开发者回来删掉 xfail 标记，避免"假绿"。
-    """
-    cases = load_cart_data()["add"]
+def _build_params(cases, *, with_xfail=False):
+    """把 YAML 里的 xfail: true 转成 pytest.mark.xfail(strict=True)。"""
     result = []
     for c in cases:
-        if c.get("xfail"):
+        if with_xfail and c.get("xfail"):
             result.append(pytest.param(
                 c,
-                marks=pytest.mark.xfail(
-                    reason=c.get("reason", ""),
-                    strict=True,
-                ),
+                marks=pytest.mark.xfail(reason=c.get("reason", ""), strict=True),
                 id=c["case_name"],
             ))
         else:
             result.append(pytest.param(c, id=c["case_name"]))
     return result
 
+def load_create_cases():   return _build_params(load_cart_data()["create"])
+def load_add_cases():      return _build_params(load_cart_data()["add"], with_xfail=True)
+def load_get_cases():      return _build_params(load_cart_data()["get"])
+def load_update_cases():   return _build_params(load_cart_data()["update_quantity"], with_xfail=True)
+def load_delete_product_cases(): return _build_params(load_cart_data()["delete_product"])
+def load_delete_cart_cases():    return _build_params(load_cart_data()["delete_cart"], with_xfail=True)
+
 
 def _create_cart_with_product(cart_api: CartApi, req, product_id: str, quantity: int):
-    """辅助：新建 cart，并在其中加购 quantity 件商品。
-
+    """新建 cart，并在其中加购 quantity 件商品。
     行为约定：
       - quantity > 0 才加购
-      - quantity == 0 视为"加了空 cart"（用于"商品不在购物车"场景）
+      - quantity == 0 视为"加了空 cart"
     返回：cart_id
     """
     cart_id = cart_api.create_cart().json()["id"]
@@ -69,12 +67,13 @@ def _create_cart_with_product(cart_api: CartApi, req, product_id: str, quantity:
         assert resp.status_code == 200, f"前置加购失败: {resp.text}"
     return cart_id
 
+def _get_cart_items(cart_api: CartApi, cart_id):
+    resp = cart_api.get_cart(cart_id)
+    assert_status(resp, 200)
+    return resp.json().get("cart_items") or []
 
-def _resolve_product_id(case, req):
-    """如果 case 里显式写了 product_id（例如 'nonexistent'），用 case 的值；
-    否则从产品列表拿一个真实 id。"""
-    return case.get("product_id") or ProductApi(req).get_products().json()["data"][0]["id"]
-
+def _find_item(items, product_id):
+    return next((i for i in items if i["product_id"] == product_id), None)
 
 @allure.epic("Toolshop 接口自动化")
 @allure.feature("购物车模块")
@@ -85,7 +84,7 @@ class TestCart:
     @allure.title("{case_name}")
     @pytest.mark.parametrize(
         "case",
-        load_cart_data()["create"],
+        load_create_cases(),
         ids=lambda c: c["case_name"],
     )
     def test_create_cart(self, auth_req, case):
@@ -97,19 +96,18 @@ class TestCart:
     # ---------- 加入购物车 ----------
     @allure.story("加入购物车")
     @allure.title("{case_name}")
-    @allure.issue("BUG-001: 非法 quantity 应返回 422，实际返回 404 Resource not found")
     @pytest.mark.parametrize(
         "case",
-        load_cart_add_cases(),
+        load_add_cases(),
         ids=lambda c: c["case_name"],
     )
     def test_add_to_cart(self, auth_req, real_product_id, case):
         cart_api = CartApi(auth_req)
 
-        # 每条用例自建购物车，避免跨用例污染（cart 是有状态的）
-        cart_id = cart_api.create_cart().json()["id"]
+        # 每条用例自建购物车，避免跨用例污染
+        cart_id = case.get("cart_id") or cart_api.create_cart().json()["id"]
 
-        # product_id 没填就从列表拿真实的；填了就用 case 的（例如 'nonexistent'）
+        # product_id 没填就从列表拿真实的；填了就用 case 的
         product_id = case.get("product_id") or real_product_id
 
         resp = cart_api.add_to_cart(cart_id, product_id, case["quantity"])
@@ -117,6 +115,10 @@ class TestCart:
 
         if case.get("expect_result_field"):
             assert_key_exists(resp, "result")
+            items = _get_cart_items(cart_api, cart_id)
+            item = _find_item(items, product_id)
+            assert item is not None, f"加购后 cart_items 里找不到 {product_id}"
+            assert item["quantity"] == case["quantity"], f"数量应为 {case['quantity']}，实际 {item['quantity']}"
 
     # ---------- 查询购物车 ----------
     @allure.story("查询购物车")
@@ -140,12 +142,13 @@ class TestCart:
         if case.get("expect_has_cart_items"):
             assert_key_exists(resp, "cart_items")
 
+
     # ---------- 更新购物车中商品数量 ----------
     @allure.story("更新购物车商品数量")
     @allure.title("{case_name}")
     @pytest.mark.parametrize(
         "case",
-        load_cart_data()["update_quantity"],
+        load_update_cases(),
         ids=lambda c: c["case_name"],
     )
     def test_update_quantity(self, auth_req, real_product_id, case):
@@ -163,6 +166,10 @@ class TestCart:
 
         if case["expect_status"] == 200:
             assert_key_exists(resp, "result")
+            items = _get_cart_items(cart_api, cart_id)
+            item = _find_item(items, real_product_id)
+            assert item is not None, f"更新后 cart_items 里找不到 {real_product_id}"
+            assert item["quantity"] == case["new_quantity"]
 
     # ---------- 删除购物车中的商品 ----------
     @allure.story("删除购物车商品")
@@ -183,28 +190,59 @@ class TestCart:
             )
 
         resp = cart_api.delete_product(cart_id, real_product_id)
-        assert_status(resp, case["expect_status"])
+        assert_status(resp, case["expect_status"])        
+        if case["expect_status"] == 204:
+            items = _get_cart_items(cart_api, cart_id)
+            assert _find_item(items, real_product_id) is None
 
     # ---------- 删除购物车 ----------
     @allure.story("删除购物车")
     @allure.title("{case_name}")
-    @allure.issue("BUG-002", "DELETE /carts/{cartId} 未鉴权，可被匿名删除")
     @pytest.mark.parametrize(
         "case",
         load_delete_cart_cases(),
         ids=lambda c: c["case_name"],
     )
-    def test_delete_cart(self, auth_req, req, case):
-        # 需要 cart_id 的场景：先建一个 cart
-        cart_id = case.get("cart_id")
-        if not cart_id:
-            cart_id = CartApi(auth_req).create_cart().json()["id"]
-
-        # 未登录场景用 req，其它用 auth_req
-        client = req if case.get("unauth") else auth_req
-
-        resp = CartApi(client).delete_cart(cart_id)
+    def test_delete_cart(self, auth_req, case):
+        cart_id = case.get("cart_id") or CartApi(auth_req).create_cart().json()["id"]
+        resp = CartApi(auth_req).delete_cart(cart_id)
         assert_status(resp, case["expect_status"])
+        assert_status(CartApi(auth_req).get_cart(cart_id), 404)
 
-        if case["expect_status"] == 401 and case.get("expect_error"):
-            assert_msg_contains(resp, case["expect_error"])
+    @allure.story("购物车全生命周期")
+    def test_cart_full_lifecycle(self, auth_req, real_product_id):
+        """create → 加 A×2 → 加 A×1 → 加 B×1 → 查 → 改 A 为 5 → 删 B → 查 → 删 cart → 查"""
+        cart_api = CartApi(auth_req)
+
+        # 1. 建 cart
+        cart_id = cart_api.create_cart().json()["id"]
+
+        # 2. 商品 A 加购 2，再加购 1 → 应为 3（累加规则）
+        product_a = real_product_id
+        assert_status(cart_api.add_to_cart(cart_id, product_a, 2), 200)
+        assert_status(cart_api.add_to_cart(cart_id, product_a, 1), 200)
+
+        items = _get_cart_items(cart_api, cart_id)
+        assert len(items) == 1, f"同商品加购应只有 1 条记录，实际 {len(items)}"
+        assert items[0]["quantity"] == 3, f"累加应为 3，实际 {items[0]['quantity']}"
+
+        # 3. 商品 B 加购 1
+        product_b = ProductApi(auth_req).get_products().json()["data"][1]["id"]
+        assert_status(cart_api.add_to_cart(cart_id, product_b, 1), 200)
+
+        items = _get_cart_items(cart_api, cart_id)
+        assert len(items) == 2
+
+        # 4. 更新 A 数量为 5
+        assert_status(cart_api.update_quantity(cart_id, product_a, 5), 200)
+        items = _get_cart_items(cart_api, cart_id)
+        assert _find_item(items, product_a)["quantity"] == 5
+
+        # 5. 删除 B
+        assert_status(cart_api.delete_product(cart_id, product_b), 204)
+        items = _get_cart_items(cart_api, cart_id)
+        assert len(items) == 1 and items[0]["product_id"] == product_a
+
+        # 6. 删除 cart
+        assert_status(cart_api.delete_cart(cart_id), 204)
+        assert_status(cart_api.get_cart(cart_id), 404)

@@ -1,22 +1,105 @@
-# 报表接口全部需要 admin token
+# ---------- GET /reports/total-sales-of-years ----------
 total_sales_of_years:
-  - case_name: "年份销售-默认"
+  - case_name: "年份销售-默认参数"
     params: {}
     expect_status: 200
+    expect_is_list: true
 
-  - case_name: "年份销售-最近2年"
-    params:
-      years: 2
+  - case_name: "年份销售-years=1"
+    params: { years: 1 }
     expect_status: 200
+    expect_is_list: true
 
+  - case_name: "年份销售-years=2"
+    params: { years: 2 }
+    expect_status: 200
+    expect_is_list: true
+
+  - case_name: "年份销售-years=5"
+    params: { years: 5 }
+    expect_status: 200
+    expect_is_list: true
+
+  - case_name: "年份销售-years=0-契约未明确"
+    params: { years: 0 }
+    expect_status: 200
+    docs_note: 实测返回当年记录
+
+  - case_name: "年份销售-years=-1-契约未明确"
+    params: { years: -1 }
+    expect_status: 200
+    docs_note: 实测返回空数组
+
+  - case_name: "年份销售-years=非数字-契约未明确"
+    params: { years: "abc" }
+    expect_status_in: 400
+    xfail: true
+    reason: "BUG: years=非数字时服务端未做类型校验，返回 500 + HTML 错误页；期望 400/422"
+
+# ---------- GET /reports/total-sales-per-country ----------
 total_sales_per_country:
   - case_name: "国家销售-正常"
     expect_status: 200
+    expect_is_list: true
 
+
+# ---------- GET /reports/top10-purchased-products ----------
 top10_purchased_products:
   - case_name: "Top10产品-正常"
     expect_status: 200
+    expect_is_list: true
 
+
+# ---------- GET /reports/top10-best-selling-categories ----------
 top10_best_selling_categories:
   - case_name: "Top10分类-正常"
+    expect_status: 200
+    expect_is_list: true
+
+
+# ---------- 未登录  ----------
+unauth:
+  - case_name: "未登录-年份销售-401"
+    method: total_sales_of_years
+    expect_status: 401
+    expect_error: "Unauthorized"
+
+  - case_name: "未登录-国家销售-401"
+    method: total_sales_per_country
+    expect_status: 401
+    expect_error: "Unauthorized"
+
+  - case_name: "未登录-Top10产品-401"
+    method: top10_purchased_products
+    expect_status: 401
+    expect_error: "Unauthorized"
+
+  - case_name: "未登录-Top10分类-401"
+    method: top10_best_selling_categories
+    expect_status: 401
+    expect_error: "Unauthorized"
+
+
+# ---------- 普通用户 ----------
+forbidden:
+  - case_name: "普通用户-年份销售-403"
+    method: total_sales_of_years
+    expect_status: 403
+
+  - case_name: "普通用户-国家销售-403"
+    method: total_sales_per_country
+    expect_status: 403
+
+  - case_name: "普通用户-Top10产品-403"
+    method: top10_purchased_products
+    expect_status: 403
+
+  - case_name: "普通用户-Top10分类-403"
+    method: top10_best_selling_categories
+    expect_status: 403
+
+
+# ---------- 场景法：admin 依次查询 4 个报表 ----------
+scenario:
+  - case_name: "完整流程-admin 依次查询 4 个报表接口"
     expect_status: 200

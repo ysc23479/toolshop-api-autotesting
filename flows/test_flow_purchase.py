@@ -1,10 +1,3 @@
-"""E2E 业务流：登录用户完整购买链路。
-
-改造说明（v2）：
-  - 使用 throwaway_user 而非 auth_req
-  - 原因：E2E 应该完全独立，不依赖 session 级 USER 账号的状态
-  - 每次跑现场注册一个账号，跑完即弃，永不污染 .env 的 USER
-"""
 import allure
 import pytest
 from api.cart_api import CartApi

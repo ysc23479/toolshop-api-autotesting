@@ -1,30 +1,152 @@
-# 契约依据（swagger + 实测确认）：
-#   - POST /payment/check 只承诺 200，不校验字段，不需要登录
-#   - 响应：{"message": "Payment was successful"}（swagger 写的是 "Success status"，文案不一致）
-#   - 它是个 mock 接口，不承担真实支付校验；真实校验在 POST /invoices 后端
-#
-# 本组用例的定位：契约快照测试
-#   若将来后端加了字段校验（返回 422）或加了鉴权（返回 401），
-#   这些用例会 FAIL，提醒我们更新契约。这就是契约测试的价值。
 check:
+  # ================= 正面 =================
+  - case_name: "支付校验-银行转账"
+    payload:
+      payment_method: "bank-transfer"
+      payment_details:
+        bank_name: "Test Bank"
+        account_name: "John Doe"
+        account_number: "12345678"
+    expect_status: 200
+
+  - case_name: "支付校验-礼品卡"
+    payload:
+      payment_method: "gift-card"
+      payment_details:
+        gift_card_number: "1234567890123456"
+        validation_code: "1234"
+    expect_status: 200
+
+  - case_name: "支付校验-先买后付"
+    payload:
+      payment_method: "buy-now-pay-later"
+      payment_details:
+        monthly_installments: "3"
+    expect_status: 200
+
   - case_name: "支付校验-现金支付"
     payload:
       payment_method: "cash-on-delivery"
       payment_details: {}
     expect_status: 200
+    expect_message: "Success status"
+    xfail: true
+    reason: "BUG: 文档示例 'Success status'，实测 'Payment was successful'"
 
-  - case_name: "支付校验-缺 payment_method（接口不校验）"
+  - case_name: "支付校验-payment_method 大小写变体"
     payload:
+      payment_method: "BANK-TRANSFER"
+      payment_details:
+        bank_name: "Test Bank"
+        account_name: "John Doe"
+        account_number: "12345678"
+    expect_status: 200
+
+  # ================= credit-card =================
+  - case_name: "支付校验-信用卡"
+    payload:
+      payment_method: "credit-card"
+      payment_details:
+        credit_card_number: "4111111111111111"
+        expiration_date: "12/2030"
+        cvv: "123"
+        card_holder_name: "John Doe"
+    expect_status: 200
+    xfail: true
+    reason: "BUG: check 接口对 credit-card 始终 404"
+
+  # ================= method  =================
+  - case_name: "支付校验-payment_method 为 null"
+    payload:
+      payment_method: null
+      payment_details:
+        bank_name: "Test Bank"
+        account_name: "John Doe"
+        account_number: "12345678"
+    expect_status: 422
+    xfail: true
+    reason: "BUG: 文档 enum 要求 payment_method 必填；实测 null 返回 200，method 维度不校验"
+
+  - case_name: "支付校验-payment_method 为数字"
+    payload:
+      payment_method: 123
+      payment_details:
+        bank_name: "Test Bank"
+        account_name: "John Doe"
+        account_number: "12345678"
+    expect_status: 422
+    xfail: true
+    reason: "BUG: 文档 enum 要求 payment_method 必填；实测数字 123 返回 200，method 维度不校验"
+
+  - case_name: "支付校验-payment_method 未在枚举中"
+    payload:
+      payment_method: "paypal"
+      payment_details:
+        bank_name: "Test Bank"
+        account_name: "John Doe"
+        account_number: "12345678"
+    expect_status: 422
+    xfail: true
+    reason: "BUG: 文档 enum 要求 payment_method 必填；实测未定义值 paypal 返回 200，method 维度不校验"
+
+  # ================= details  =================
+  - case_name: "支付校验-payment_details 为 null"
+    payload:
+      payment_method: "bank-transfer"
+      payment_details: null
+    expect_status: 422
+    xfail: true
+    reason: "BUG: details 校验失败被全局 Handler 吞成 404 Resource not found，非 422"
+
+  - case_name: "支付校验-payment_details 为字符串"
+    payload:
+      payment_method: "bank-transfer"
+      payment_details: "not-an-object"
+    expect_status: 422
+    xfail: true
+    reason: "BUG: details 校验失败被全局 Handler 吞成 404 Resource not found，非 422"
+
+  - case_name: "支付校验-payment_details 为数组"
+    payload:
+      payment_method: "bank-transfer"
+      payment_details: []
+    expect_status: 422
+    xfail: true
+    reason: "BUG: details 校验失败被全局 Handler 吞成 404 Resource not found，非 422"
+
+  - case_name: "支付校验-payment_details 为空对象"
+    payload:
+      payment_method: "bank-transfer"
       payment_details: {}
-    expect_status: 200
+    expect_status: 422
+    xfail: true
+    reason: "BUG: details 校验失败被全局 Handler 吞成 404 Resource not found，非 422"
 
-  - case_name: "支付校验-缺 payment_details（接口不校验）"
+  - case_name: "支付校验-银行转账 method + 信用卡 details"
     payload:
-      payment_method: "cash-on-delivery"
-    expect_status: 200
+      payment_method: "bank-transfer"
+      payment_details:
+        credit_card_number: "4111111111111111"
+        expiration_date: "12/2030"
+        cvv: "123"
+        card_holder_name: "John Doe"
+    expect_status: 422
+    xfail: true
+    reason: "details 结构与 method 不匹配，服务端走 details 校验失败路径，返回404"
 
-  - case_name: "支付校验-非法 payment_method（接口不校验）"
+# ================= 边界 =================
+  - case_name: "支付校验-完全空 body"
+    payload: {}
+    expect_status: 422
+    xfail: true
+    reason: "BUG: 文档 schema 要求 payment_method 必填；实测空 body 返回 200，与 'details 为 null 却 404' 语义矛盾"
+
+  - case_name: "支付校验-礼品卡含字母卡号"
     payload:
-      payment_method: "nonexistent-method"
-      payment_details: {}
-    expect_status: 200
+      payment_method: "gift-card"
+      payment_details:
+        gift_card_number: "GC-123"
+        validation_code: "999"
+    expect_status: 422
+    xfail: true
+    reason: "BUG: 服务端要求 gift_card_number 纯数字，含字母返回 404 Resource not found，错误码应为 422"

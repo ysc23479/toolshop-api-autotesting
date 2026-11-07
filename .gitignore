@@ -4,3 +4,4 @@ __pycache__/
 allure-results/
 .vscode/
 .env
+tree.txt

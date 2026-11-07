@@ -1,23 +1,40 @@
-# ---------- 列表 / 详情 ----------
+# ---------- 列表 ----------
 list:
   - case_name: "品牌列表-正常"
     expect_status: 200
 
+  - case_name: "品牌列表-无token"
+    login_as: "none"
+    expect_status: 200            
+    doc_note: "验证 GET /brands 无需鉴权"
+
+  - case_name: "品牌列表-普通用户"
+    login_as: "user"
+    expect_status: 200
+
+# ---------- 详情 ----------
 detail:
   - case_name: "品牌详情-正常"
     expect_status: 200
     expect_has_name: true
+    expect_has_slug: true        
 
   - case_name: "品牌详情-不存在的ID"
-    brand_id: "nonexistent"
+    brand_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
     expect_status: 404
 
+  - case_name: "品牌详情-无token"
+    login_as: "none"
+    expect_status: 200         
+    expect_has_name: true
+
 # ---------- 创建 ----------
-# slug 由测试代码自动加时间戳，避免跨用例冲突
 create:
   - case_name: "创建品牌-正常"
     expect_status: 201
     expect_has_id: true
+    expect_has_slug: true
+    expect_success_landed: true 
 
   - case_name: "创建品牌-缺 name"
     omit: ["name"]
@@ -27,9 +44,85 @@ create:
     omit: ["slug"]
     expect_status: 422
 
-# ---------- 权限 ----------
-unauth:
-  - case_name: "创建品牌-普通用户（越权）"
+  - case_name: "创建品牌-name 为空字符串"
+    override: { name: "" }
+    expect_status: 422
+
+  - case_name: "创建品牌-slug 为空字符串"
+    override: { slug: "" }
+    expect_status: 422
+
+  - case_name: "创建品牌-slug 含大写"
+    override: { slug: "Auto-Brand-ABC" }
+    expect_status: 422
+    xfail: true
+    doc_note: "URL slug 惯例全小写；若实测接受则改 201 并记为契约缺口"
+
+  - case_name: "创建品牌-额外字段"
+    override: { id: "999", foo: "bar" }   # 传不允许的字段
+    expect_status: 201
+    doc_note: "验证服务端是否忽略/拒绝未知字段；若忽略多传字段也返回 201"
+
+  - case_name: "创建品牌-无token"
+    login_as: "none"
+    expect_status: 401
+    xfail: true
+    doc_note: "OpenAPI 未声明 security；若实测 201 说明公开创建，属业务权限缺陷；若 401 是文档缺 security"
+
+  - case_name: "创建品牌-普通用户"
+    login_as: "user"
     expect_status: 403
     xfail: true
-    reason: "BUG-005: 普通用户能创建品牌（201），RBAC 中间件缺失。admin-only 写接口对普通用户放行。"
+    doc_note: "若实测 201 说明普通用户可创建品牌，属权限缺陷；若 403/401 符合预期"
+
+# ---------- 更新 ----------  
+update:
+  - case_name: "PUT 更新品牌-正常"
+    expect_status: 200
+    expect_success: true
+    expect_success_landed: true
+
+  - case_name: "PUT 更新品牌-缺 name"
+    omit: ["name"]
+    expect_status: 422
+    xfail: true
+    reason: "BUG：POST /brands 缺 name 返回 422，但 PUT 缺 name 返回 200。同一 BrandRequest schema，读写校验不一致"
+  
+  - case_name: "PUT 更新品牌-缺 slug"
+    omit: ["slug"]
+    expect_status: 422
+    xfail: true
+    reason: "BUG：POST /brands 缺 slug 返回 422，但 PUT 缺 slug 返回 200。同一 BrandRequest schema，读写校验不一致"
+
+  - case_name: "PUT 更新品牌-不存在的ID"
+    brand_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
+    expect_status: 404
+
+  - case_name: "PUT 更新品牌-无token"
+    login_as: "none"
+    expect_status: 401
+    xfail: true
+    doc_note: "OpenAPI 未声明 security；若实测 200 说明公开更新，属权限缺陷"
+
+# ---------- 删除 ---------- 
+delete:
+  - case_name: "DELETE 品牌-正常"
+    expect_status: 204
+
+  - case_name: "DELETE 品牌-不存在的ID"
+    brand_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
+    expect_status: 404
+
+  - case_name: "DELETE 品牌-无token"
+    login_as: "none"
+    expect_status: 401
+
+  - case_name: "DELETE 品牌-普通用户"
+    login_as: "user"
+    expect_status: 403
+    doc_note: "文档明确 Admin role is required；普通 user 应被拒"
+
+  - case_name: "DELETE 品牌-被产品引用"
+    brand_id: "FROM_BRAND_IN_USE"    # 需要一个已知被产品关联的 brand_id
+    expect_status: 409
+    doc_note: "文档 409 ConflictResponse：品牌被引用时不允许删除；需构造或从产品里找一个 brand_id"

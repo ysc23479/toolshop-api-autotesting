@@ -1,6 +1,4 @@
-# api/user_api.py
 from utils.request_util import RequestUtil
-
 
 class UserApi:
     """用户资源统一封装。
@@ -8,7 +6,6 @@ class UserApi:
     分层：
       - 鉴权：login / logout / refresh / me
       - 账号生命周期：register / forgot_password / change_password
-      - 用户管理：list / get / update / delete / search（admin，待补）
     """
 
     PATH = "/users"
@@ -38,37 +35,25 @@ class UserApi:
 
     # ---------- 账号生命周期 ----------
     def register(self, payload: dict):
-        """POST /users/register —— 无需登录。
-
-        契约要点：
-          - 成功 201，返回完整 user 对象
-          - 邮箱重复 409
-          - 密码被 haveibeenpwned 收录 422
-          - 密码不合规（缺大写/数字/符号）422
-        """
+        """POST /users/register —— 无需登录"""
         return self.req.send("POST", f"{self.PATH}/register", json=payload)
 
     def forgot_password(self, email: str):
-        """POST /users/forgot-password —— 无需登录。
-
-        契约要点（swagger 已注明）：
-          - 成功 200 {"success": true}
-          - 实际行为：把密码重置为 "welcome02"
+        """POST /users/forgot-password —— 无需登录
+        实际把密码重置为 "welcome02"
         """
         return self.req.send("POST", f"{self.PATH}/forgot-password", json={
             "email": email,
         })
 
     def change_password(self, current_password, new_password, new_password_confirmation):
-        """POST /users/change-password —— 需登录态。
-
-        契约要点：
-          - 成功 200 {"success": true}
-          - 旧密码错误 / 新密码不合规 422
-          - 新旧密码相同 422
-        """
+        """POST /users/change-password —— 需登录态"""
         return self.req.send("POST", f"{self.PATH}/change-password", json={
             "current_password": current_password,
             "new_password": new_password,
             "new_password_confirmation": new_password_confirmation,
         })
+
+    def patch(self, user_id, payload: dict):
+        """PATCH /users/{userId} —— 局部更新用户资料（需登录态）"""
+        return self.req.send("PATCH", f"{self.PATH}/{user_id}", json=payload)

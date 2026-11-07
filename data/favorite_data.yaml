@@ -1,44 +1,94 @@
-# ---------- 添加收藏 ----------
+# ---------- 添加收藏 POST /favorites ----------
 add:
-  - case_name: "收藏-正常"
+  - case_name: "添加收藏-有效商品-成功"
     use_real_product: true
     expect_status: 201
     expect_has_id: true
 
-  - case_name: "收藏-不存在的商品"
-    product_id: "nonexistent"
+  - case_name: "添加收藏-不存在的商品-422"
+    product_id: "nonexistent_product_id"
     expect_status: 422
 
-# 重复收藏：swagger 明确 409（字段级 MessageBag 或单条 message）
-# 用例执行前会先清理该 product，确保它是"已收藏"状态后再 add
+  - case_name: "添加收藏-商品ID为空字符串-422"
+    product_id: ""
+    expect_status: 422
+
+  - case_name: "添加收藏-商品ID超长-422"
+    product_id: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    expect_status: 422
+
+  - case_name: "添加收藏-请求体为空对象-422"
+    payload: {}
+    expect_status: 422
+
+  - case_name: "添加收藏-product_id 为 null-422"
+    payload: { product_id: null }
+    expect_status: 422
+
+  - case_name: "添加收藏-product_id 为数字类型-422"
+    payload: { product_id: 12345 }
+    expect_status: 422
+
+  - case_name: "添加收藏-product_id 含 SQL 注入字符-422"
+    product_id: "'; DROP TABLE favorites;--"
+    expect_status: 422
+
+
+# ---------- 重复收藏 POST /favorites ----------
 duplicate:
-  - case_name: "收藏-重复收藏"
+  - case_name: "添加收藏-同一商品已收藏-409"
     use_real_product: true
     expect_status: 409
 
-# ---------- 查询 / 删除 ----------
-get:
-  - case_name: "查收藏-正常"
-    expect_status: 200
 
-  - case_name: "查收藏-不存在的ID"
-    favorite_id: "nonexistent"
+# ---------- 查询单个收藏 GET /favorites/{favoriteId} ----------
+get:
+  - case_name: "查询收藏-有效ID-成功"
+    use_real_favorite: true
+    expect_status: 200
+    expect_has_id: true
+
+  - case_name: "查询收藏-不存在的ID-404"
+    favorite_id: "nonexistent_favorite_id"
     expect_status: 404
 
+
+# ---------- 列出所有收藏 GET /favorites ----------
+list:
+  - case_name: "列出收藏-正常-成功"
+    expect_status: 200
+    expect_is_list: true
+
+
+# ---------- 删除收藏 DELETE /favorites/{favoriteId} ----------
 delete:
-  - case_name: "删收藏-正常"
+  - case_name: "删除收藏-有效ID-成功"
+    use_real_favorite: true
     expect_status: 204
 
-  - case_name: "删收藏-不存在的ID"
-    favorite_id: "nonexistent"
+  - case_name: "删除收藏-不存在的ID-幂等返回204"
+    favorite_id: "nonexistent_favorite_id"
     expect_status: 204
 
-# ---------- 权限 ----------
+
+# ---------- 权限校验 ----------
 unauth:
-  - case_name: "收藏-未登录"
+  - case_name: "未登录-列出收藏-401"
+    method: list
     expect_status: 401
     expect_error: "Unauthorized"
 
-  - case_name: "查收藏-未登录"
+  - case_name: "未登录-添加收藏-401"
+    method: add
+    expect_status: 401
+    expect_error: "Unauthorized"
+
+  - case_name: "未登录-查询收藏-401"
+    method: get
+    expect_status: 401
+    expect_error: "Unauthorized"
+
+  - case_name: "未登录-删除收藏-401"
+    method: delete
     expect_status: 401
     expect_error: "Unauthorized"

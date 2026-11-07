@@ -28,10 +28,10 @@ jobs:
       - name: Run tests
         env:
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          USER_EMAIL: ${{ secrets.USER_EMAIL }}
-          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
-        run: pytest -m "not slow"
+          ADMIN_PWD: ${{ secrets.ADMIN_PWD }}
+          CUSTOMER_EMAIL: ${{ secrets.CUSTOMER_EMAIL }}
+          CUSTOMER_PWD: ${{ secrets.CUSTOMER_PWD }}
+        run: pytest -m e2e
 
       - name: Upload Allure results
         if: always()

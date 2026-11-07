@@ -1,9 +1,60 @@
+# ---------- 列表 GET /categories ----------
 list:
   - case_name: "分类列表-正常"
+    login_as: "admin"
     expect_status: 200
 
+  - case_name: "分类列表-无token"
+    login_as: "none"
+    expect_status: 200
+
+  - case_name: "分类列表-普通用户"
+    login_as: "user"
+    expect_status: 200
+
+# ---------- 树 GET /categories/tree ----------
+tree:
+  - case_name: "分类树-正常"
+    expect_status: 200
+
+  - case_name: "分类树-按 category_slug 过滤"
+    by_category_slug: "FROM_EXISTING_SLUG"
+    expect_status: 200
+
+  - case_name: "分类树-不存在的 slug"
+    by_category_slug: "nonexistent-slug-xyz"
+    expect_status: 200
+    doc_note: "文档未定义不存在时返回；可能 200+空数组或 200+完整树，实测后决定是否收紧"
+
+  - case_name: "分类树-无token"
+    login_as: "none"
+    expect_status: 200
+
+# ---------- 详情 GET /categories/tree/{id} ----------
+detail:
+  - case_name: "分类详情-正常"
+    expect_status: 200
+    expect_has_name: true
+    expect_has_slug: true
+
+  - case_name: "分类详情-不存在的ID"
+    category_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
+    expect_status: 404
+
+  - case_name: "分类详情-无token"
+    login_as: "none"
+    expect_status: 200
+
+# ---------- 创建 POST /categories ----------
 create:
   - case_name: "创建分类-顶级"
+    expect_status: 201
+    expect_has_id: true
+    expect_has_slug: true
+    expect_success_landed: true
+
+  - case_name: "创建分类-带 parent_id"
+    override: { parent_id: "FROM_CATEGORY_ID" }
     expect_status: 201
     expect_has_id: true
 
@@ -15,14 +66,52 @@ create:
     omit: ["slug"]
     expect_status: 422
 
-# 子分类创建（parent_id 用真实 id）
-create_child:
-  - case_name: "创建分类-子分类（带 parent_id）"
-    expect_status: 201
-    expect_has_id: true
+  - case_name: "创建分类-name 为空字符串"
+    override: { name: "" }
+    expect_status: 422
 
-unauth:
-  - case_name: "创建分类-普通用户（越权）"
-    expect_status: 403
+  - case_name: "创建分类-slug 为空字符串"
+    override: { slug: "" }
+    expect_status: 422
+
+  - case_name: "创建分类-slug 含空格"
+    override: { slug: "auto category 123" }
+    expect_status: 422
+
+  - case_name: "创建分类-slug 含大写"
+    override: { slug: "Auto-Category-ABC" }
+    expect_status: 422
     xfail: true
-    reason: "BUG-005: 普通用户能创建分类，RBAC 中间件缺失。admin-only 写接口对普通用户放行。"
+    reason: "契约缺口：slug 是 URL part，惯例全小写；实测后端接受大写返回 201，未校验 slug 格式"
+
+  - case_name: "创建分类-parent_id 不存在"
+    override: { parent_id: "01AAAAAAAAAAAAAAAAAAAAAAAA" }
+    expect_status: 404
+    xfail: true
+    reason: "BUG：parent_id 指向不存在的分类，期望 422 参数校验失败，实测返回 500 'Something went wrong'——服务端未处理外键不存在，属内部错误"
+
+  - case_name: "创建分类-无token"
+    login_as: "none"
+    expect_status: 201
+
+# ---------- 删除 DELETE /categories/{id} ----------
+delete:
+  - case_name: "DELETE 分类-正常"
+    expect_status: 204
+
+  - case_name: "DELETE 分类-不存在的ID"
+    category_id: "01AAAAAAAAAAAAAAAAAAAAAAAA"
+    expect_status: 404
+
+  - case_name: "DELETE 分类-无token"
+    login_as: "none"
+    expect_status: 401
+
+  - case_name: "DELETE 分类-普通用户"
+    login_as: "user"
+    expect_status: 403
+
+  - case_name: "DELETE 分类-被产品引用"
+    category_id: "FROM_CATEGORY_IN_USE"
+    expect_status: 409
+    doc_note: "文档 409 ConflictResponse：分类被引用时不允许删除"

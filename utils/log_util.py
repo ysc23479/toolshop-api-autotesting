@@ -1,9 +1,9 @@
-# utils/log_util.py
 import logging
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOG_DIR = os.path.join(BASE_DIR, "logs")
+os.makedirs(LOG_DIR, exist_ok=True) #确保logs/目录存在
 
 def get_logger(name=__name__):
     logger = logging.getLogger(name)
@@ -16,7 +16,7 @@ def get_logger(name=__name__):
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
     console.setFormatter(logging.Formatter(
-        "\n%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S"
+        "\n%(asctime)s [%(levelname)s] %(name)s: %(message)s", datefmt="%H:%M:%S"
     ))
     logger.addHandler(console)
 
