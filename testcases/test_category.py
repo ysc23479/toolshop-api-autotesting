@@ -1,4 +1,4 @@
-import time
+﻿import time
 import allure
 import pytest
 
@@ -64,7 +64,7 @@ class TestCategory:
 
     # ---------- 列表 ----------
     @allure.story("分类列表")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_category_data()["list"]),
@@ -80,7 +80,7 @@ class TestCategory:
 
     # ---------- 树 ----------
     @allure.story("分类树")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_category_data()["tree"]),
@@ -101,7 +101,7 @@ class TestCategory:
 
     # ---------- 详情 ----------
     @allure.story("分类详情")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_category_data()["detail"]),
@@ -120,7 +120,7 @@ class TestCategory:
 
     # ---------- 创建 ----------
     @allure.story("创建分类")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_category_data()["create"]),
@@ -157,7 +157,7 @@ class TestCategory:
 
     # ---------- 删除 ----------
     @allure.story("删除分类")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_category_data()["delete"]),

@@ -1,4 +1,4 @@
-import allure
+﻿import allure
 import pytest
 from api.cart_api import CartApi
 from api.invoice_api import InvoiceApi
@@ -20,11 +20,11 @@ E2E_GUEST_PAYLOAD = {
 
 
 @allure.epic("Toolshop 接口自动化")
-@allure.feature("E2E-游客购买流程")
+@allure.feature("业务流程-E2E")
 @pytest.mark.e2e
 class TestGuestPurchaseFlow:
 
-    @allure.story("游客完整购买链路")
+    @allure.story("游客购买流程")
     @allure.title("匿名 → 建 cart → 加购 → guest 下单")
     def test_guest_full_purchase_flow(self, req):
         """游客链路验证：不需要登录也能完整下单。"""

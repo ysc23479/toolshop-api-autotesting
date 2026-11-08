@@ -1,4 +1,4 @@
-import allure
+﻿import allure
 import pytest
 
 from api.totp_api import TotpApi
@@ -56,7 +56,7 @@ class TestTotp:
 
     # ============ 1. TOTP 设置 ============
     @allure.story("TOTP 设置")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_totp_data()["setup"]),
@@ -73,7 +73,7 @@ class TestTotp:
 
     # ============ 2. TOTP 验证 ============
     @allure.story("TOTP 验证")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_totp_data()["verify"]),
@@ -95,7 +95,7 @@ class TestTotp:
 
     # ============ 3. 权限校验 ============
     @allure.story("权限校验")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_totp_data()["unauth"]),
@@ -116,7 +116,7 @@ class TestTotp:
 
     # ============ 4. 场景法：完整业务流程 ============
     @allure.story("完整业务流程")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_totp_data()["scenario"]),

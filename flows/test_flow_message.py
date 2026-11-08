@@ -1,4 +1,4 @@
-"""E2E：消息流转（登录用户）。"""
+﻿"""E2E：消息流转（登录用户）。"""
 import time
 
 import allure

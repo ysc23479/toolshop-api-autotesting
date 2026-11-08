@@ -1,4 +1,4 @@
-import time
+﻿import time
 
 import allure
 import pytest
@@ -82,7 +82,7 @@ class TestMessage:
 
     # ============ 1. 发送消息 ============
     @allure.story("发送消息")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_message_data()["send"]),
@@ -103,7 +103,7 @@ class TestMessage:
 
     # ============ 2. 消息列表  ============
     @allure.story("消息列表")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_message_data()["list"]),
@@ -120,7 +120,7 @@ class TestMessage:
 
     # ============ 3. 获取单条消息 ============
     @allure.story("获取单条消息")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_message_data()["get"]),
@@ -141,7 +141,7 @@ class TestMessage:
 
     # ============ 4. 回复消息 ============
     @allure.story("回复消息")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_message_data()["reply"]),
@@ -163,7 +163,7 @@ class TestMessage:
 
     # ============ 5. 上传附件 ============
     @allure.story("消息附件")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_message_data()["attach"]),
@@ -194,7 +194,7 @@ class TestMessage:
 
     # ============ 6. 权限校验 ============
     @allure.story("权限校验")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_message_data()["unauth"]),

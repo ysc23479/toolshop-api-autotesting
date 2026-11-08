@@ -1,4 +1,4 @@
-import allure
+﻿import allure
 import pytest
 
 from api.payment_api import PaymentApi
@@ -30,7 +30,7 @@ def _build_params(cases, *, with_xfail=True):
 class TestPayment:
 
     @allure.story("支付校验")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _build_params(load_payment_data()["check"]),

@@ -1,4 +1,4 @@
-from os import path
+﻿from os import path
 import time
 import allure
 import pytest
@@ -119,7 +119,7 @@ class TestProduct:
 
     # ---------- 列表 ----------
     @allure.story("产品列表")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_product_data()["list"],
@@ -134,7 +134,7 @@ class TestProduct:
 
     # ---------- 详情 ----------
     @allure.story("产品详情")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_product_data()["detail"],
@@ -149,7 +149,7 @@ class TestProduct:
 
     # ---------- 相关产品 ----------
     @allure.story("相关产品")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("related"))
     def test_get_related(self, req, real_product_id, case):
         pid = real_product_id if case["product_id"] == "FROM_PRODUCT" else case["product_id"]
@@ -160,7 +160,7 @@ class TestProduct:
 
     # ---------- 搜索 ----------
     @allure.story("产品搜索")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("search"))
     def test_search(self, req, case):
         resp = ProductApi(req).search(**case.get("params", {}))
@@ -209,7 +209,7 @@ class TestProductAdmin:
                 f"{k} 被意外修改：{_pick(created, k)} -> {_pick(after, k)}"
             )
     @allure.story("创建产品")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("create"))
     def test_create_product(self, admin_req, real_brand_id, real_category_id,
                             real_product_image_id, case):
@@ -221,7 +221,7 @@ class TestProductAdmin:
             assert_key_exists(resp, "id")
 
     @allure.story("更新产品")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("update_put"))
     def test_update_put(self, admin_req, real_brand_id, real_category_id,
                         real_product_image_id, case):
@@ -236,7 +236,7 @@ class TestProductAdmin:
                         real_product_image_id, case, "patch")
 
     @allure.story("删除产品")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_product_data()["delete"],
@@ -259,7 +259,7 @@ class TestProductAdmin:
             assert_status(ProductApi(admin_req).delete(product_id), 404)
 
     @allure.story("删除产品-鉴权")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("delete_unauth"))
     def test_delete_product_unauth(self, req, admin_req, real_brand_id,
                                    real_category_id, real_product_image_id, case):
@@ -273,7 +273,7 @@ class TestProductAdmin:
         assert_status(resp, case["expect_status"])
 
     @allure.story("删除产品-鉴权")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("delete_forbidden"))
     def test_delete_product_forbidden(self, auth_req, admin_req, real_brand_id,
                                       real_category_id, real_product_image_id, case):

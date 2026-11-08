@@ -14,7 +14,7 @@ class RequestUtil:
         self.refresh_threshold = refresh_threshold     # 剩多少秒就刷新
     
     def _ensure_token_fresh(self):
-        """请求前检查 token 剩余有效期，快过期就主动刷新"""
+        """请求前检查 token 剩余有效期，快过期或已过期就主动刷新"""
         if not self.refresh_callback:
             return
         auth = self.session.headers.get("Authorization", "")
@@ -22,7 +22,13 @@ class RequestUtil:
             return
         from utils.jwt_util import token_expires_in
         remaining = token_expires_in(auth.split(" ", 1)[1])
-        if 0 <= remaining < self.refresh_threshold:
+
+        # 解析失败跳过，避免每个请求都刷新
+        if remaining == -1:
+            return
+
+        # 快过期或已过期刷新
+        if remaining < self.refresh_threshold:
             new_token = self.refresh_callback()
             if new_token:
                 self.session.headers["Authorization"] = f"Bearer {new_token}"

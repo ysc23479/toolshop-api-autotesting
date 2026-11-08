@@ -1,4 +1,4 @@
-import allure
+﻿import allure
 import pytest
 from api.cart_api import CartApi
 from api.invoice_api import InvoiceApi
@@ -16,11 +16,11 @@ E2E_BILLING = {
 
 
 @allure.epic("Toolshop 接口自动化")
-@allure.feature("E2E-购买全流程")
+@allure.feature("业务流程-E2E")
 @pytest.mark.e2e
 class TestPurchaseFlow:
 
-    @allure.story("登录用户完整购买链路")
+    @allure.story("登录用户完整购买流程")
     @allure.title("登录 → 建 cart → 加购 ×2 → 下单 → 查订单 → 查列表")
     def test_full_purchase_flow(self, throwaway_user):
         """E2E 用一次性账号，完全独立于 .env 的 USER 状态。"""

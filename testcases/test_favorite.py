@@ -1,4 +1,4 @@
-import allure
+﻿import allure
 import pytest
 
 from api.favorite_api import FavoriteApi
@@ -61,7 +61,7 @@ class TestFavorite:
 
     # ============ 1. 添加收藏 ============
     @allure.story("添加收藏")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_favorite_data()["add"],
@@ -82,7 +82,7 @@ class TestFavorite:
 
     # ============ 2. 重复收藏 ============
     @allure.story("重复收藏")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_favorite_data()["duplicate"],
@@ -99,7 +99,7 @@ class TestFavorite:
 
     # ============ 3. 查询单个收藏 ============
     @allure.story("查询收藏")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_favorite_data()["get"],
@@ -120,7 +120,7 @@ class TestFavorite:
 
     # ============ 4. 列出收藏 ============
     @allure.story("列出收藏")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_favorite_data()["list"],
@@ -139,7 +139,7 @@ class TestFavorite:
 
     # ============ 5. 删除收藏 ============
     @allure.story("删除收藏")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_favorite_data()["delete"],
@@ -158,7 +158,7 @@ class TestFavorite:
 
     # ============ 6. 权限校验 ============
     @allure.story("权限校验")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_favorite_data()["unauth"],

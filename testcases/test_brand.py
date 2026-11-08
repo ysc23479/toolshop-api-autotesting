@@ -1,4 +1,4 @@
-import time
+﻿import time
 import allure
 import pytest
 
@@ -67,7 +67,7 @@ class TestBrand:
 
     # ---------- 列表 ----------
     @allure.story("品牌列表")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_brand_data()["list"]),
@@ -81,7 +81,7 @@ class TestBrand:
 
     # ---------- 详情 ----------
     @allure.story("品牌详情")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_brand_data()["detail"]),
@@ -98,7 +98,7 @@ class TestBrand:
 
     # ---------- 创建 ----------
     @allure.story("创建品牌")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_brand_data()["create"]),
@@ -132,7 +132,7 @@ class TestBrand:
     
     # ---------- 更新 ----------
     @allure.story("更新品牌")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_brand_data()["update"]),
@@ -171,7 +171,7 @@ class TestBrand:
         
     # ---------- 删除 ----------
     @allure.story("删除品牌")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_brand_data()["delete"]),

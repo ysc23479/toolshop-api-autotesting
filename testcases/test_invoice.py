@@ -1,4 +1,4 @@
-import allure
+﻿import allure
 import pytest
 import time
 from api.invoice_api import InvoiceApi
@@ -105,7 +105,7 @@ class TestInvoice:
 
     # ---------- 列表 ----------
     @allure.story("发票列表")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("list"))
     def test_list_invoices(self, req, auth_req, admin_req, case):
         client = _pick_client(case, req, auth_req, admin_req)
@@ -121,7 +121,7 @@ class TestInvoice:
 
     # ---------- 搜索 ----------
     @allure.story("发票搜索")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("search"))
     def test_search_invoices(self, req, auth_req, admin_req,
                             real_invoice_detail, case):
@@ -149,7 +149,7 @@ class TestInvoice:
 
     # ---------- 详情 ----------
     @allure.story("发票详情")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("get"))
     def test_get_invoice(self, req, auth_req, admin_req, real_invoice_id, case):
         client = _pick_client(case, req, auth_req, admin_req)
@@ -163,7 +163,7 @@ class TestInvoice:
 
     # ---------- 创建 ----------
     @allure.story("创建发票")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("create"))
     def test_create_invoice(self, req, auth_req, admin_req, real_cart_id, case):
         client = _pick_client(case, req, auth_req, admin_req)
@@ -177,7 +177,7 @@ class TestInvoice:
 
     # ---------- 游客下单 ----------
     @allure.story("游客下单")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("guest"))
     def test_create_guest_invoice(self, req, real_cart_id, case):
         payload = _build_invoice_payload(case, cart_id=real_cart_id)
@@ -188,7 +188,7 @@ class TestInvoice:
 
     # ---------- PUT 更新 ----------
     @allure.story("更新发票")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("update_put"))
     def test_update_invoice_put(self, req, admin_req, real_cart_id, real_invoice, case):
         client = _pick_client(case, req, req, admin_req)
@@ -201,7 +201,7 @@ class TestInvoice:
 
     # ---------- PATCH 更新 ----------
     @allure.story("更新发票")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("update_patch"))
     def test_update_invoice_patch(self, req, admin_req, real_invoice, case):
         client = _pick_client(case, req, req, admin_req)
@@ -213,7 +213,7 @@ class TestInvoice:
 
     # ---------- 更新状态 ----------
     @allure.story("更新发票状态")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("status"))
     def test_update_status(self, req, admin_req, real_invoice, case):
         client = _pick_client(case, req, req, admin_req)
@@ -227,7 +227,7 @@ class TestInvoice:
 
     # ---------- PDF 状态 ----------
     @allure.story("PDF 状态")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("pdf_status"))
     def test_pdf_status(self, req, admin_req, real_invoice_number, case):
         client = _pick_client(case, req, req, admin_req)
@@ -237,7 +237,7 @@ class TestInvoice:
 
     # ---------- PDF 下载 ----------
     @allure.story("PDF 下载")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize("case", _load_cases("pdf_download"))
     def test_pdf_download(self, req, auth_req, admin_req, pdf_ready_invoice_number, case):
         client = _pick_client(case, req, auth_req, admin_req)

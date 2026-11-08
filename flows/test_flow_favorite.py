@@ -1,4 +1,4 @@
-"""E2E：收藏流转（登录用户）。"""
+﻿"""E2E：收藏流转（登录用户）。"""
 import allure
 import pytest
 

@@ -1,4 +1,4 @@
-import allure
+﻿import allure
 import pytest
 
 from api.user_api import UserApi

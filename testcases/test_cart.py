@@ -1,4 +1,4 @@
-import allure
+﻿import allure
 import pytest
 
 from api.cart_api import CartApi
@@ -81,7 +81,7 @@ class TestCart:
 
     # ---------- 创建购物车 ----------
     @allure.story("创建购物车")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_create_cases(),
@@ -95,7 +95,7 @@ class TestCart:
 
     # ---------- 加入购物车 ----------
     @allure.story("加入购物车")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_add_cases(),
@@ -122,7 +122,7 @@ class TestCart:
 
     # ---------- 查询购物车 ----------
     @allure.story("查询购物车")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_cart_data()["get"],
@@ -145,7 +145,7 @@ class TestCart:
 
     # ---------- 更新购物车中商品数量 ----------
     @allure.story("更新购物车商品数量")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_update_cases(),
@@ -173,7 +173,7 @@ class TestCart:
 
     # ---------- 删除购物车中的商品 ----------
     @allure.story("删除购物车商品")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_cart_data()["delete_product"],
@@ -197,7 +197,7 @@ class TestCart:
 
     # ---------- 删除购物车 ----------
     @allure.story("删除购物车")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_delete_cart_cases(),

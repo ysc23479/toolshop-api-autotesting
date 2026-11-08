@@ -1,4 +1,4 @@
-import os
+﻿import os
 import allure
 import pytest
 import time
@@ -60,7 +60,7 @@ class TestLogin:
 
     # ---------- 登录 ----------
     @allure.story("用户登录")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_user_data()["login"],
@@ -379,7 +379,7 @@ class TestRegister:
         return payload
 
     @allure.story("用户注册")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _wrap_cases_with_xfail(load_user_data()["register"]),
@@ -440,7 +440,7 @@ class TestPassword:
 
     # ---------- 忘记密码 ----------
     @allure.story("忘记密码")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         load_user_data()["forgot_password"],
@@ -501,7 +501,7 @@ class TestPassword:
 
     # ---------- 修改密码 ----------
     @allure.story("修改密码")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @allure.issue("BUG-004: 两次新密码不一致应返回 422（请求体验证失败），实际返回 404 Resource not found。")
     @pytest.mark.parametrize(
         "case",

@@ -1,4 +1,4 @@
-import allure
+﻿import allure
 import pytest
 
 from api.report_api import ReportApi
@@ -48,7 +48,7 @@ class TestReport:
 
     # ============ 1. 年份销售 ============
     @allure.story("年份销售")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_report_data()["total_sales_of_years"]),
@@ -60,7 +60,7 @@ class TestReport:
 
     # ============ 2. 国家销售 ============
     @allure.story("国家销售")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_report_data()["total_sales_per_country"]),
@@ -72,7 +72,7 @@ class TestReport:
 
     # ============ 3. Top10 产品 ============
     @allure.story("Top10 产品")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_report_data()["top10_purchased_products"]),
@@ -84,7 +84,7 @@ class TestReport:
 
     # ============ 4. Top10 分类 ============
     @allure.story("Top10 分类")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_report_data()["top10_best_selling_categories"]),
@@ -96,7 +96,7 @@ class TestReport:
 
     # ============ 5. 未登录权限 ============
     @allure.story("权限校验-未登录")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_report_data()["unauth"]),
@@ -111,7 +111,7 @@ class TestReport:
 
     # ============ 6. 普通用户权限 ============
     @allure.story("权限校验-普通用户")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_report_data()["forbidden"]),
@@ -124,7 +124,7 @@ class TestReport:
 
     # ============ 7. 场景法 ============
     @allure.story("完整业务流程")
-    @allure.title("{case_name}")
+    @allure.title("{case[case_name]}")
     @pytest.mark.parametrize(
         "case",
         _param_with_marks(load_report_data()["scenario"]),
