@@ -29,8 +29,8 @@ jobs:
         env:
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_PWD: ${{ secrets.ADMIN_PWD }}
-          CUSTOMER_EMAIL: ${{ secrets.CUSTOMER_EMAIL }}
-          CUSTOMER_PWD: ${{ secrets.CUSTOMER_PWD }}
+          CUSTOMER_EMAIL: ${{ secrets.USER_EMAIL }}
+          CUSTOMER_PWD: ${{ secrets.USER_PASSWORD }}
         run: pytest -m e2e
 
       - name: Upload Allure results
